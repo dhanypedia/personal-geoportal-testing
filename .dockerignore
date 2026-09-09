@@ -2,9 +2,7 @@ node_modules
 .next
 .git
 .gitignore
-.env
-.env
-.local
+.env*
 npm-debug.log*
 README.md
 .vscode

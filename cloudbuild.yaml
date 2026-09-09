@@ -1,32 +1,35 @@
+substitutions:
+  _REGION: asia-southeast2
+  _REPOSITORY: katalog-images
+  _IMAGE_NAME: nextjs-app
+
 steps:
-  # 1. Build image dari Dockerfile
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: gcr.io/cloud-builders/docker
     args:
-      - 'build'
-      - '-t'
-      - 'asia-southeast2-docker.pkg.dev/project-2cd93730-d9d7-41ee-820/katalog-images/nextjs-app:latest'
-      - '.'
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA
+      - .
 
-  # 2. Push image ke Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: gcr.io/cloud-builders/docker
     args:
-      - 'push'
-      - 'asia-southeast2-docker.pkg.dev/project-2cd93730-d9d7-41ee-820/katalog-images/nextjs-app:latest'
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA
 
-  # 3. SSH ke VM, pull image terbaru, restart container nextjs
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
     args:
-      - '-c'
+      - -c
       - |
-        gcloud compute ssh latihan-web-gis \
-          --zone=asia-southeast2-b \
+        gcloud compute ssh "${_VM_NAME}" \
+          --zone="${_VM_ZONE}" \
           --tunnel-through-iap \
           --quiet \
-          --command="gcloud auth configure-docker asia-southeast2-docker.pkg.dev --quiet && cd /home/matiurari0/app && docker compose pull nextjs && docker compose up -d nextjs"
+          --command="gcloud auth configure-docker ${_REGION}-docker.pkg.dev --quiet && cd '${_VM_APP_DIR}' && NEXTJS_IMAGE='${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA' docker compose pull nextjs && NEXTJS_IMAGE='${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA' docker compose up -d nextjs"
 
 images:
-  - 'asia-southeast2-docker.pkg.dev/project-2cd93730-d9d7-41ee-820/katalog-images/nextjs-app:latest'
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA
 
 options:
+  dynamicSubstitutions: true
   logging: CLOUD_LOGGING_ONLY
