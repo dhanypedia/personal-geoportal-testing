@@ -25,7 +25,7 @@ steps:
           --zone="${_VM_ZONE}" \
           --tunnel-through-iap \
           --quiet \
-          --command="sudo gcloud auth configure-docker ${_REGION}-docker.pkg.dev --quiet && cd '${_VM_APP_DIR}' && NEXTJS_IMAGE='${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA' sudo -E docker compose pull nextjs && NEXTJS_IMAGE='${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA' sudo -E docker compose up -d nextjs"
+          --command="sudo gcloud auth configure-docker ${_REGION}-docker.pkg.dev --quiet && cd '${_VM_APP_DIR}' && NEXTJS_IMAGE='${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA' sudo -E docker compose pull nextjs && NEXTJS_IMAGE='${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA' sudo -E docker compose up -d"
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE_NAME}:$SHORT_SHA
