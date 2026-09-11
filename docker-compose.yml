@@ -10,10 +10,10 @@ services:
       - app-network
     restart: unless-stopped
 
-  # Ganti ISI_PASSWORD_GEOSERVER sebelum push. Dengan nilai ini GeoServer memakai
-  # kata sandi tersebut setiap kali container dijalankan, sehingga kata sandi bertahan
-  # setelah restart. Kalau dibiarkan apa adanya, image kartoza membuat kata sandi acak
-  # baru pada setiap start dan menuliskannya ke log container.
+  # Kata sandi diambil dari .env, bukan ditulis di sini, karena repository ini public.
+  # Dengan nilai ini GeoServer memakai kata sandi tersebut setiap kali container
+  # dijalankan, sehingga kata sandi bertahan setelah restart. Kalau variabelnya kosong,
+  # image kartoza membuat kata sandi acak baru pada setiap start dan menuliskannya ke log.
   geoserver:
     image: kartoza/geoserver:2.24.1
     container_name: geoserver_app
@@ -22,7 +22,7 @@ services:
       - INITIAL_MEMORY=512m
       - MAXIMUM_MEMORY=2048m
       - GEOSERVER_ADMIN_USER=admin
-      - GEOSERVER_ADMIN_PASSWORD=qUG23X9K$U^DA3
+      - GEOSERVER_ADMIN_PASSWORD=${GEOSERVER_ADMIN_PASSWORD}
       - GEOSERVER_CORS_ENABLED=true
       - GEOSERVER_CORS_ALLOWED_ORIGINS=*
     volumes:
