@@ -1,7 +1,10 @@
 substitutions:
   _REGION: asia-southeast2
   _REPOSITORY: katalog-images
-  _IMAGE_NAME: nextjs-app
+  # _IMAGE_NAME, _VM_NAME, dan _VM_ZONE sengaja tidak diberi nilai bawaan.
+  # Ketiganya wajib diisi pada substitution variable trigger. Tanpa nilai bawaan,
+  # build berhenti dengan pesan yang jelas daripada diam-diam memakai satu nama
+  # image bersama dan menimpa image milik asisten lain di Artifact Registry.
 
 steps:
   - name: gcr.io/cloud-builders/docker

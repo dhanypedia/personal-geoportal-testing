@@ -47,3 +47,6 @@ next-env.d.ts
 /public/data/models
 
 /data
+
+# Data GeoServer dibuat di VM, bukan bagian dari source code
+/geoserver-data/
