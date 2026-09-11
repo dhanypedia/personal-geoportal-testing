@@ -8,14 +8,13 @@ datasource db {
 }
 
 model users {
-  user_id   String  @id(map: "users_pk") @db.VarChar
-  email     String? @db.VarChar
-  password  String? @db.VarChar
-  role      String? @db.VarChar
-  is_active Boolean @default(false)
-
-  // Relasi balik ke katalog_data_2d
-  katalog_2d katalog_data_2d[]
+  user_id         String            @id(map: "users_pk") @db.VarChar
+  email           String?           @db.VarChar
+  password        String?           @db.VarChar
+  role            String?           @db.VarChar
+  is_active       Boolean           @default(false)
+  katalog_data_2d katalog_data_2d[]
+  katalog_data_3d katalog_data_3d[]
 }
 
 model katalog_data_2d {
@@ -26,7 +25,19 @@ model katalog_data_2d {
   wms_url     String?  @db.VarChar
   wfs_url     String?  @db.VarChar
   author      String?  @db.VarChar
+  users       users?   @relation(fields: [author], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "katalog_data_2d_users_fk")
+}
 
-  // Definisi relasi foreign key
-  user_author users?   @relation(fields: [author], references: [user_id])
+model katalog_data_3d {
+  data_3d_id String  @id(map: "katalog_data_3d_pk") @db.VarChar
+  author     String? @db.VarChar
+  nama       String? @db.VarChar
+  akses      String? @db.VarChar
+  url        String? @db.VarChar
+  latitude   Float?
+  longitude  Float?
+  heading    Int?
+  pitch      Int?
+  roll       Int?
+  users      users?  @relation(fields: [author], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "katalog_data_3d_users_fk")
 }

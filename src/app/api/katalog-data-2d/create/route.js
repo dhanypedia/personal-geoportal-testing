@@ -174,7 +174,7 @@ export async function POST(request) {
         const wfsUrl = `${geoserverUrl}/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${workspace}:${tableName}&outputFormat=application/json`;
 
         // 8. Simpan Record ke Tabel katalog_data_2d & Include Data Author
-        const createdRecord = await db.katalog_data_2d.create({
+        const newKatalogData = await db.katalog_data_2d.create({
             data: {
                 data_2d_id: crypto.randomUUID(),
                 layer_name: `${workspace}:${tableName}`,
@@ -191,24 +191,13 @@ export async function POST(request) {
                 is_editable: true,
                 wms_url: true,
                 wfs_url: true,
-                user_author: {
+                users: {
                     select: {
                         email: true,
                     },
                 },
             },
         });
-
-        // Transformasi response agar field 'author' langsung berisi string email
-        const newKatalogData = {
-            data_2d_id: createdRecord.data_2d_id,
-            layer_name: createdRecord.layer_name,
-            akses: createdRecord.akses,
-            is_editable: createdRecord.is_editable,
-            wms_url: createdRecord.wms_url,
-            wfs_url: createdRecord.wfs_url,
-            author: createdRecord.user_author?.email || null,
-        };
 
         return NextResponse.json({
             success: true,
