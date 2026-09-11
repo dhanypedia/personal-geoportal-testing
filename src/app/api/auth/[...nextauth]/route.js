@@ -3,103 +3,64 @@ import Credentials from "next-auth/providers/credentials";
 import { verifyCredentials } from "../../../../../lib/auth/verifyCredentials";
 import { signAccessToken } from "../../../../../lib/auth/jwt";
 
-function isDbConnectionError(err) {
-    const code = err?.code || err?.cause?.code;
-    const dbErrorCodes = ["ECONNREFUSED", "P1001", "ETIMEDOUT", "ENOTFOUND"];
-
-    if (dbErrorCodes.includes(code)) return true;
-
-    const message = err?.message || "";
-    return (
-        message.includes("Can't reach database server") ||
-        message.includes("P1001")
-    );
-}
-
-async function loginViaProd(email, password) {
-    if (!process.env.AUTH_API_URL) {
-        throw new Error("AUTH_API_URL belum diset di .env, tidak bisa fallback ke prod");
-    }
-
-    const res = await fetch(`${process.env.AUTH_API_URL}/users/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-        throw new Error(data.message || "Email atau password salah!");
-    }
-
-    return {
-        user_id: data.user.user_id,
-        email: data.user.email,
-        role: data.user.role,
-        accessToken: data.access_token, 
-    };
-}
-
 export const authOptions = {
     providers: [
         Credentials({
             id: "geoportal-credential",
             name: "geoportal-credential",
             credentials: {
-                email: { label: "Email", type: "text" },
-                password: { label: "Password", type: "password" },
+                email: { label: "Email", type: "text" }, // email yang user masukan di halaman login
+                password: { label: "Password", type: "password" }, // password yang user masukan di halaman login
             },
             authorize: async (credentials) => {
-                const { email, password } = credentials;
-
                 try {
-                    const user = await verifyCredentials(email, password);
+                    const user = await verifyCredentials(credentials.email, credentials.password); //validasi email dan password
                     const accessToken = signAccessToken(user);
-
                     return {
+                        id: user.user_id, // NextAuth membutuhkan properti `id`
                         user_id: user.user_id,
                         email: user.email,
                         role: user.role,
-                        accessToken,
+                        accessToken
                     };
                 } catch (err) {
-                    if (isDbConnectionError(err)) {
-                        console.warn("[auth] DB local tidak tersedia, fallback ke prod...");
-                        try {
-                            return await loginViaProd(email, password);
-                        } catch (prodErr) {
-                            throw new Error(prodErr.message || "Login ke prod gagal");
-                        }
-                    }
-
                     throw new Error(err.message || "Terjadi kesalahan server");
                 }
             },
         }),
     ],
-
-    session: { strategy: "jwt" },
-
+    session: { strategy: "jwt", maxAge: 60 * 60 }, // 1 Jam
     callbacks: {
         async jwt({ token, user }) {
+            // 1. Saat pertama kali login
             if (user) {
                 token.user_id = user.user_id;
                 token.email = user.email;
                 token.role = user.role;
                 token.accessToken = user.accessToken;
+                return token;
+            }
+            // 2. Cek apakah Custom Bearer Token sudah expired/invalid
+            try {
+                verifyAccessToken(token.accessToken); // Cek validitas
+            } catch (err) {
+                // Jika expired, buat ulang Bearer Token baru menggunakan data user dari token NextAuth
+                token.accessToken = signAccessToken({
+                    user_id: token.user_id,
+                    email: token.email,
+                    role: token.role,
+                });
             }
             return token;
         },
         async session({ session, token }) {
-            session.user.user_id = token.user_id;
+            session.user.id = token.id;
             session.user.email = token.email;
             session.user.role = token.role;
             session.accessToken = token.accessToken;
             return session;
         },
     },
-
     pages: { signIn: "/login" },
     secret: process.env.NEXTAUTH_SECRET,
 };

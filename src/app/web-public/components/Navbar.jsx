@@ -20,7 +20,7 @@ import MapIcon from "@mui/icons-material/Map";
 import HomeIcon from "@mui/icons-material/Home";
 
 const menuItems = [
-  { label: "Beranda", path: "/web-public", icon: <HomeIcon fontSize="small" /> },
+  { label: "Beranda", path: "/", icon: <HomeIcon fontSize="small" /> },
   { label: "Peta", path: "/web-public/peta", icon: <MapIcon fontSize="small" /> },
 ];
 

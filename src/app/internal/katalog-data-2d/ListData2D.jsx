@@ -8,37 +8,41 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import LayersIcon from "@mui/icons-material/Layers";
 
-const API_URL = "https://matiur-geoportal.com/portal/api/katalog-data-2d/list";
-
 const ListData2D = ({ search, onDelete }) => {
   const { data: session, status } = useSession();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-const fetchData = useCallback(async (signal) => {
-  if (!session?.user?.access_token && !session?.accessToken) return;
-  try {
-    setLoading(true);
-    setError(null);
-    const res = await fetch("/portal/api/prod-katalog-data-2d/list", {
-      signal,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.user?.access_token || session.accessToken}`,
-        Accept: "application/json",
-      },
-    });
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const result = await res.json();
-    setData(result.data || []);
-  } catch (err) {
-    if (err.name === "AbortError") return;
-    setError(err.message || "Gagal mengambil data");
-  } finally {
-    setLoading(false);
-  }
-}, [session]);
+  const fetchData = useCallback(async (signal) => {
+    if (!session?.accessToken) return;
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await fetch("/portal/api/katalog-data-2d/list", {
+        signal,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.accessToken}`,
+          Accept: "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || `HTTP error! status: ${res.status}`);
+      }
+
+      const result = await res.json();
+      setData(result.data || []);
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      setError(err.message || "Gagal mengambil data");
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -151,7 +155,7 @@ const fetchData = useCallback(async (signal) => {
             </TableCell>
             <TableCell>
               <Typography variant="body2" sx={{ color: "#1E1E2D" }}>
-                {row.author || "-"}
+                {row.users?.email || "-"}
               </Typography>
             </TableCell>
             <TableCell align="right">

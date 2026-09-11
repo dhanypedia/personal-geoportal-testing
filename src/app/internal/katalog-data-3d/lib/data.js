@@ -7,7 +7,7 @@ const getData = async (access_token) => {
         }
     });
 
-    const data = await response.json();
+    const { data } = await response.json();
     return data;
 }
 

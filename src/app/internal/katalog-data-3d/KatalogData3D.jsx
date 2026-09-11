@@ -13,48 +13,61 @@ import {
   TextField,
   InputAdornment,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
   Chip,
   IconButton,
   Tooltip,
   Link,
+  Modal,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import TambahData from "./TambahData";
 import PreviewCesiumModal from "./PreviewCesiumModal";
+import { Close, Visibility } from "@mui/icons-material";
+import { useSession } from "next-auth/react";
 
 export default function KatalogData3D({ data }) {
+  const [tableData, setTableData] = useState(data);
   const [search, setSearch] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
 
   const [openPreview, setOpenPreview] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
+  const [form, setForm] = useState({ nama: "", file: null, akses: "public" });
 
-  const [form, setForm] = useState({ nama: "", file: null, akses: "public", });
+  const session = useSession();
+
+  // Fungsi Fetch Ulang Data dari Endpoint GET
+  const refreshData = async () => {
+    try {
+      const res = await fetch(`${process.env.BASE_URL}/api/katalog-data-3d/list`, {
+        headers: {
+          Authorization: `Bearer ${session?.data?.accessToken}`,
+        },
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setTableData(result.data || result);
+      }
+    } catch (err) {
+      console.error("Gagal memperbarui data tabel:", err);
+    }
+  };
 
   useEffect(() => {
     if (!search.trim()) {
-      setFilteredData(data.data);
+      setFilteredData(tableData);
       return;
     }
     const query = search.toLowerCase();
-    const result = data.data.filter((item) => {
-      const namaMatch = item.nama?.toLowerCase().includes(query);
-      const userMatch =
-        item.users?.name?.toLowerCase().includes(query) ||
-        item.users?.username?.toLowerCase().includes(query);
-      return namaMatch || userMatch;
+    const result = tableData.filter((item) => {
+      return item.nama?.toLowerCase().includes(query);
     });
-
     setFilteredData(result);
-  }, [search, data]);
+  }, [search, tableData]);
 
   const handleOpenCreate = () => {
     setForm({ nama: "", file: null, akses: "public" });
@@ -89,11 +102,10 @@ export default function KatalogData3D({ data }) {
           gap: 2,
         }}
       >
-        <Box>
-          <Typography variant="h5" fontWeight={700} sx={{ color: "#1E1E2D" }}>
-            Katalog Data 3D
-          </Typography>
-        </Box>
+        <Typography variant="h5" fontWeight={700} sx={{ color: "#1E1E2D" }}>
+          Katalog Data 3D
+        </Typography>
+
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -113,7 +125,7 @@ export default function KatalogData3D({ data }) {
 
       {/* Search Input */}
       <TextField
-        placeholder="Cari nama layer atau pembuat..."
+        placeholder="Cari nama layer..."
         size="small"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -205,7 +217,7 @@ export default function KatalogData3D({ data }) {
                   </TableCell>
 
                   <TableCell sx={{ color: "#374151" }}>
-                    {row.users?.name || row.users?.username || "System"}
+                    {row.users?.email || "-"}
                   </TableCell>
 
                   <TableCell>
@@ -225,7 +237,7 @@ export default function KatalogData3D({ data }) {
                         color="primary"
                         onClick={() => handleOpenPreview(row)}
                       >
-                        <VisibilityIcon fontSize="small" />
+                        <Visibility fontSize="small" />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Edit Metadata">
@@ -257,27 +269,40 @@ export default function KatalogData3D({ data }) {
       </Paper>
 
       {/* Modal Form Tambah Data */}
-      <Dialog
-        open={openCreate}
-        onClose={() => setOpenCreate(false)}
-        fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              bgcolor: "#fff",
-              color: "#1E1E2D",
-              borderRadius: 3,
-            },
-          },
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, color: "#1E1E2D" }}>
-          Tambah Layer Data 3D
-        </DialogTitle>
-        <DialogContent>
-          <TambahData form={form} setForm={setForm} handleCloseCreate={handleCloseCreate}/>
-        </DialogContent>
-      </Dialog>
+      <Modal open={openCreate} onClose={handleCloseCreate} aria-labelledby="modal-tambah-data-3d">
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: { xs: "90%", sm: 600, md: 700 },
+            bgcolor: "#fff",
+            color: "#1E1E2D",
+            borderRadius: 3,
+            boxShadow: 24,
+            p: 3,
+            outline: "none",
+          }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Typography id="modal-tambah-data-3d" variant="h6" sx={{ fontWeight: 700, color: "#1E1E2D" }}>
+              Tambah Layer Data 3D
+            </Typography>
+            <IconButton onClick={handleCloseCreate} size="small" sx={{ color: "#6B7280" }}>
+              <Close />
+            </IconButton>
+          </Box>
+
+          <TambahData
+            form={form}
+            setForm={setForm}
+            handleCloseCreate={handleCloseCreate}
+            onSuccess={refreshData}
+            accessToken={session?.data?.accessToken}
+          />
+        </Box>
+      </Modal>
 
       {/* Modal Preview Cesium */}
       <PreviewCesiumModal

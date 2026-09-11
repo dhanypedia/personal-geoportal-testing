@@ -12,7 +12,7 @@ const TambahData2D = ({ form, setForm, submitting, setSubmitting, onSuccess, onC
       return;
     }
 
-    const accessToken = session?.user?.access_token || session?.accessToken;
+    const accessToken = session?.accessToken;
     if (!accessToken) {
       Swal.fire("Gagal!", "Access token tidak tersedia.", "error");
       return;
@@ -26,7 +26,7 @@ const TambahData2D = ({ form, setForm, submitting, setSubmitting, onSuccess, onC
       formData.append("akses", form.akses);
       formData.append("editable", form.editable);
 
-      const res = await fetch("/portal/api/prod-katalog-data-2d/create", {
+      const res = await fetch(`/portal/api/katalog-data-2d/create`, {
         method: "POST",
         headers: { Authorization: `Bearer ${accessToken}` },
         body: formData,
@@ -35,7 +35,7 @@ const TambahData2D = ({ form, setForm, submitting, setSubmitting, onSuccess, onC
       const result = await res.json();
 
       if (!res.ok || !result.success) {
-        throw new Error(result.message || "Gagal menyimpan layer");
+        throw new Error(result.message || result.error || "Gagal menyimpan layer");
       }
 
       Swal.fire("Berhasil", result.message || `Layer "${result.data.layer_name}" berhasil disimpan`, "success");

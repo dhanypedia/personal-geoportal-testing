@@ -26,42 +26,42 @@ export default function KatalogData2D() {
   };
 
   const handleDelete = async (row) => {
-    const confirm = await Swal.fire({
-      title: `Hapus "${row.layer_name}"?`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Ya, hapus",
-      cancelButtonText: "Batal",
-      confirmButtonColor: "#DC2626",
-    });
-    if (!confirm.isConfirmed) return;
+      const confirm = await Swal.fire({
+        title: `Hapus "${row.layer_name}"?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Ya, hapus",
+        cancelButtonText: "Batal",
+        confirmButtonColor: "#DC2626",
+      });
+      if (!confirm.isConfirmed) return;
 
-    const accessToken = session?.user?.access_token || session?.accessToken;
-    if (!accessToken) {
-      Swal.fire("Gagal!", "Access token tidak tersedia.", "error");
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `/portal/api/prod-katalog-data-2d/delete?data_2d_id=${row.data_2d_id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.message || "Gagal menghapus layer");
+      const accessToken = session?.accessToken;
+      if (!accessToken) {
+        Swal.fire("Gagal!", "Access token tidak tersedia.", "error");
+        return;
       }
 
-      Swal.fire("Terhapus", result.message || "Layer berhasil dihapus", "success");
-      setRefreshKey((k) => k + 1);
-    } catch (err) {
-      Swal.fire("Gagal!", err.message || "Terjadi kesalahan saat menghapus", "error");
-    }
+      try {
+        const res = await fetch(
+          `/portal/api/katalog-data-2d/delete?data_2d_id=${row.data_2d_id}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+
+        const result = await res.json();
+
+        if (!res.ok) {
+          throw new Error(result.message || result.error || "Gagal menghapus layer");
+        }
+
+        Swal.fire("Terhapus", result.message || "Layer berhasil dihapus", "success");
+        setRefreshKey((k) => k + 1);
+      } catch (err) {
+        Swal.fire("Gagal!", err.message || "Terjadi kesalahan saat menghapus", "error");
+      }
   };
 
   return (

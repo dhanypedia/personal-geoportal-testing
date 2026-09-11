@@ -11,8 +11,8 @@ model users {
   user_id         String            @id(map: "users_pk") @db.VarChar
   email           String?           @db.VarChar
   password        String?           @db.VarChar
-  role            String?           @db.VarChar
   is_active       Boolean           @default(false)
+  role            String?           @db.VarChar
   katalog_data_2d katalog_data_2d[]
   katalog_data_3d katalog_data_3d[]
 }
