@@ -24,70 +24,97 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import TambahData from "./TambahData";
-import PreviewCesiumModal from "./PreviewCesiumModal";
 import { Close, Visibility } from "@mui/icons-material";
 import { useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
+import HapusData from "./HapusData";
 
-export default function KatalogData3D({ data }) {
-  const [tableData, setTableData] = useState(data);
+const PreviewCesiumModal = dynamic(
+  () => import("./PreviewCesiumModal"),
+  { ssr: false }
+);
+
+export default function KatalogData3D() {
+  // Inisialisasi state awal dengan array kosong
+  const [tableData, setTableData] = useState([]);
   const [search, setSearch] = useState("");
   const [filteredData, setFilteredData] = useState([]);
-  const [previewItem, setPreviewItem] = useState(null);
+  const [focusItem, setFocusItem] = useState(null);
 
   const [openPreview, setOpenPreview] = useState(false);
-  const [openCreate, setOpenCreate] = useState(false);
+  const [openAdd, setOpenAdd] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
   const [form, setForm] = useState({ nama: "", file: null, akses: "public" });
 
   const session = useSession();
 
-  // Fungsi Fetch Ulang Data dari Endpoint GET
-  const refreshData = async () => {
+  // Fungsi Fetch Data dari Client Side
+  const getData = async () => {
     try {
-      const res = await fetch(`${process.env.BASE_URL}/api/katalog-data-3d/list`, {
+      const res = await fetch("/portal/api/katalog-data-3d/list", {
         headers: {
           Authorization: `Bearer ${session?.data?.accessToken}`,
         },
       });
+
       if (res.ok) {
         const result = await res.json();
         setTableData(result.data || result);
       }
     } catch (err) {
-      console.error("Gagal memperbarui data tabel:", err);
+      console.error("Gagal mengambil data tabel:", err);
     }
   };
 
+  // 1. Trigger Fetch Awal saat Komponen Di-mount / Token Siap
+  useEffect(() => {
+    if (session?.data?.accessToken) {
+      getData();
+    }
+  }, [session?.data?.accessToken]);
+
+  // 2. Handling Pencarian dan Filter Data
   useEffect(() => {
     if (!search.trim()) {
       setFilteredData(tableData);
       return;
     }
     const query = search.toLowerCase();
-    const result = tableData.filter((item) => {
+    const result = (tableData || []).filter((item) => {
       return item.nama?.toLowerCase().includes(query);
     });
     setFilteredData(result);
   }, [search, tableData]);
 
-  const handleOpenCreate = () => {
+  const handleOpenAdd = () => {
     setForm({ nama: "", file: null, akses: "public" });
-    setOpenCreate(true);
+    setOpenAdd(true);
   };
 
-  const handleCloseCreate = () => {
+  const handleCloseAdd = () => {
     setForm({ nama: "", file: null, akses: "public" });
-    setOpenCreate(false);
+    setOpenAdd(false);
   };
 
   const handleOpenPreview = (item) => {
     setOpenPreview(true);
-    setPreviewItem(item);
+    setFocusItem(item);
   };
 
   const handleClosePreview = () => {
     setOpenPreview(false);
-    setPreviewItem(null);
+    setFocusItem(null);
   };
+
+  const handleOpenDelete = (item) => {
+    setOpenDelete(true)
+    setFocusItem(item)
+  }
+
+  const handleCloseDelete = () => {
+    setOpenDelete(false)
+    setFocusItem(null);
+  }
 
   return (
     <Box sx={{ p: 1 }}>
@@ -95,7 +122,6 @@ export default function KatalogData3D({ data }) {
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
           alignItems: "center",
           mb: 2,
           flexWrap: "wrap",
@@ -106,48 +132,54 @@ export default function KatalogData3D({ data }) {
           Katalog Data 3D
         </Typography>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenCreate}
-          sx={{
-            bgcolor: "#4F46E5",
-            "&:hover": { bgcolor: "#4338CA" },
-            borderRadius: 2,
-            textTransform: "none",
-            fontWeight: 600,
-            px: 2.5,
-          }}
-        >
-          Tambah Layer 3D
-        </Button>
-      </Box>
 
-      {/* Search Input */}
-      <TextField
-        placeholder="Cari nama layer..."
-        size="small"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        sx={{
-          mb: 2,
-          width: 320,
-          bgcolor: "#1E1E2D",
-          borderRadius: 2,
-          "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-          "& .MuiInputBase-input": { color: "#fff" },
-          "& .MuiInputBase-input::placeholder": { color: "#E5E7EB", opacity: 0.8 },
-        }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" sx={{ color: "#E5E7EB" }} />
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
+      </Box>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2, height: "40px" }}>
+        {/* Search Input */}
+        <TextField
+          placeholder="Cari nama layer..."
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{
+            mb: 2,
+            height: "100%",
+            width: 320,
+            bgcolor: "#1E1E2D",
+            borderRadius: 2,
+            "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+            "& .MuiInputBase-input": { color: "#fff" },
+            "& .MuiInputBase-input::placeholder": { color: "#E5E7EB", opacity: 0.8 },
+          }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" sx={{ color: "#E5E7EB" }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        {session?.data?.user?.role !== "viewer" ? (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenAdd}
+            sx={{
+              height: "100%",
+              bgcolor: "#4F46E5",
+              "&:hover": { bgcolor: "#4338CA" },
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 600,
+              px: 2.5,
+            }}
+          >
+            Tambah Layer 3D
+          </Button>
+        ) : null}
+      </Box>
 
       {/* Data Table */}
       <Paper
@@ -181,7 +213,7 @@ export default function KatalogData3D({ data }) {
           </TableHead>
 
           <TableBody>
-            {filteredData.length > 0 ? (
+            {filteredData?.length > 0 ? (
               filteredData.map((row) => (
                 <TableRow
                   key={row.data_3d_id}
@@ -232,24 +264,24 @@ export default function KatalogData3D({ data }) {
 
                   <TableCell align="center">
                     <Tooltip title="Preview di Cesium">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => handleOpenPreview(row)}
-                      >
+                      <IconButton size="small" color="primary" onClick={() => handleOpenPreview(row)}>
                         <Visibility fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Edit Metadata">
-                      <IconButton size="small" color="info">
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Hapus Layer">
-                      <IconButton size="small" color="error">
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                    {session?.data?.user?.role !== "viewer" ? (
+                      <>
+                        <Tooltip title="Edit Metadata">
+                          <IconButton size="small" color="info">
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Hapus Layer">
+                          <IconButton size="small" color="error" onClick={() => handleOpenDelete(row)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))
@@ -269,7 +301,7 @@ export default function KatalogData3D({ data }) {
       </Paper>
 
       {/* Modal Form Tambah Data */}
-      <Modal open={openCreate} onClose={handleCloseCreate} aria-labelledby="modal-tambah-data-3d">
+      <Modal open={openAdd} onClose={handleCloseAdd}>
         <Box
           sx={{
             position: "absolute",
@@ -289,7 +321,7 @@ export default function KatalogData3D({ data }) {
             <Typography id="modal-tambah-data-3d" variant="h6" sx={{ fontWeight: 700, color: "#1E1E2D" }}>
               Tambah Layer Data 3D
             </Typography>
-            <IconButton onClick={handleCloseCreate} size="small" sx={{ color: "#6B7280" }}>
+            <IconButton onClick={handleCloseAdd} size="small" sx={{ color: "#6B7280" }}>
               <Close />
             </IconButton>
           </Box>
@@ -297,19 +329,77 @@ export default function KatalogData3D({ data }) {
           <TambahData
             form={form}
             setForm={setForm}
-            handleCloseCreate={handleCloseCreate}
-            onSuccess={refreshData}
+            handleCloseAdd={handleCloseAdd}
+            getData={getData}
             accessToken={session?.data?.accessToken}
           />
         </Box>
       </Modal>
 
       {/* Modal Preview Cesium */}
-      <PreviewCesiumModal
-        open={openPreview}
-        onClose={handleClosePreview}
-        item={previewItem}
-      />
+      <Modal open={openPreview} onClose={handleClosePreview}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: { xs: "90%", sm: 600, md: 700 },
+            bgcolor: "#fff",
+            color: "#1E1E2D",
+            borderRadius: 3,
+            boxShadow: 24,
+            p: 3,
+            outline: "none",
+          }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Typography id="modal-tambah-data-3d" variant="h6" sx={{ fontWeight: 700, color: "#1E1E2D" }}>
+              Tambah Layer Data 3D
+            </Typography>
+            <IconButton onClick={handleClosePreview} size="small" sx={{ color: "#6B7280" }}>
+              <Close />
+            </IconButton>
+          </Box>
+          <PreviewCesiumModal
+            openPreview={openPreview}
+            onClose={handleClosePreview}
+            item={focusItem}
+          />
+        </Box>
+      </Modal>
+
+      {/* Modal Hapus Data */}
+      <Modal open={openDelete} onClose={handleCloseDelete} >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: { xs: "90%", sm: 450, md: 500 },
+            bgcolor: "#fff",
+            color: "#1E1E2D",
+            borderRadius: 3,
+            boxShadow: 24,
+            p: 3,
+            outline: "none",
+          }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+            <IconButton onClick={handleCloseDelete} size="small" sx={{ color: "#6B7280" }}>
+              <Close />
+            </IconButton>
+          </Box>
+
+          <HapusData
+            item={focusItem}
+            accessToken={session?.data?.accessToken}
+            getData={getData}
+            handleCloseDelete={handleCloseDelete}
+          />
+        </Box>
+      </Modal>
     </Box>
   );
 }

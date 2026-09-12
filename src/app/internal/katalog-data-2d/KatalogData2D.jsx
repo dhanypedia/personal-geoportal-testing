@@ -43,8 +43,7 @@ export default function KatalogData2D() {
       }
 
       try {
-        const res = await fetch(
-          `/portal/api/katalog-data-2d/delete?data_2d_id=${row.data_2d_id}`,
+        const res = await fetch(`/portal/api/katalog-data-2d/delete?data_2d_id=${row.data_2d_id}`,
           {
             method: "DELETE",
             headers: { Authorization: `Bearer ${accessToken}` },

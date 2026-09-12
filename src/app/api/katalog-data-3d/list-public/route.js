@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../../lib/db";
-import { requireAuth } from "../../../../../lib/auth/verifyBearerToken";
 
 export async function GET(request) {
-    const { payload, error, status } = requireAuth(request, "viewer");
-    if (error) {
-        return NextResponse.json({ message: error }, { status });
-    }
-
     try {
         const data = await db.katalog_data_3d.findMany({
+            where: {
+                akses: "public"
+            },
             select: {
                 data_3d_id: true,
                 nama: true,

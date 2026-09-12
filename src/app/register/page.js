@@ -1,11 +1,9 @@
-import { Box } from "@mui/material";
+import { Box } from '@mui/material'
+import React from 'react'
+import RegisterForm from './RegisterForm'
 import { palette } from "../../theme/theme"
-import LoginForm from "./LoginForm";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/[...nextauth]/route";
 
-export default async function LoginPage() {
-    const session = await getServerSession(authOptions);
+const page = () => {
     return (
         <Box
             sx={{
@@ -18,7 +16,9 @@ export default async function LoginPage() {
                 px: 2,
             }}
         >
-            <LoginForm session={session}/>
+            <RegisterForm />
         </Box>
-    );
+    )
 }
+
+export default page

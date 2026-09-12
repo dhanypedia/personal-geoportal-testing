@@ -37,7 +37,7 @@ export default function Topbar() {
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await signOut({ callbackUrl: "/portal/web-public" });
+    await signOut({ callbackUrl: "/portal" });
   };
 
   const userInitial =

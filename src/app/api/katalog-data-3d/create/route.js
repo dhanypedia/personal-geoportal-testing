@@ -39,7 +39,7 @@ export async function POST(request) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const uploadDir = path.join(process.cwd(), "data");
+        const uploadDir = path.join(process.cwd(), "data/models");
 
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -50,7 +50,7 @@ export async function POST(request) {
         // Tulis file ke storage lokal
         await writeFile(filePath, buffer);
 
-        const fileUrl = `${process.env.BASE_URL}/api/katalog-data-3d/models/${data_3d_id}`;
+        const fileUrl = `${process.env.NEXT_PUBLIC_URL_BASE_PATH}/api/katalog-data-3d/models/${data_3d_id}`;
 
         // 3. Simpan ke Database Prisma dengan UUID yang sama
         await db.katalog_data_3d.create({
