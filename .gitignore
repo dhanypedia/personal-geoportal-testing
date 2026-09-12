@@ -50,3 +50,8 @@ next-env.d.ts
 
 # Data GeoServer dibuat di VM, bukan bagian dari source code
 /geoserver-data/
+
+# Sertifikat TLS dan direktori tantangan Let's Encrypt dibuat di VM,
+# bukan bagian dari source code.
+/tls/
+/certbot-webroot/
